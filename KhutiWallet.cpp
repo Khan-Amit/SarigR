@@ -13,17 +13,16 @@
 #include <nlohmann/json.hpp>
 #include <chrono>
 #include <thread>
-#include <cstdio>   // for popen
+#include <cstdio>
 #include <mutex>
 #include <condition_variable>
 
-// External queue for miner output (declared in KhutiWebServer.cpp)
+// External queue (declared in KhutiWebServer.cpp)
 extern std::queue<std::string> minerOutputQueue;
 extern std::mutex queueMutex;
 extern std::condition_variable queueCV;
 extern bool minerRunning;
 
-// -- Base58 & address helpers (simplified) --
 static const std::string BASE58_ALPH = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
 std::string KhutiWallet::base58_encode(const std::vector<unsigned char>& data) {
@@ -69,7 +68,6 @@ std::vector<unsigned char> KhutiWallet::base58_decode(const std::string& str) {
     return result;
 }
 
-// -- Wallet Implementation --
 KhutiWallet::KhutiWallet() : onchain_balance(0), hawala_pending_balance(0),
                              last_block_height(0), is_loaded(false), shares(0) {
     memset(private_key, 0, 32);
@@ -77,7 +75,6 @@ KhutiWallet::KhutiWallet() : onchain_balance(0), hawala_pending_balance(0),
 
 void KhutiWallet::generate_keypair() {
     RAND_bytes(private_key, 32);
-    // Derive public key (OpenSSL EC)
     EC_KEY* key = EC_KEY_new_by_curve_name(NID_secp256k1);
     EC_KEY_set_private_key(key, BN_bin2bn(private_key, 32, nullptr));
     EC_KEY_generate_key(key);
@@ -92,7 +89,6 @@ void KhutiWallet::generate_keypair() {
         public_key_hex += buf;
     }
 
-    // Address: SHA-256 + RIPEMD-160 of public key (P2PKH)
     unsigned char hash1[32], hash2[20];
     SHA256(pub_bytes, len, hash1);
     EVP_MD_CTX* md = EVP_MD_CTX_new();
@@ -132,7 +128,7 @@ bool KhutiWallet::create_new(const std::string& password, const std::string& sav
     file.write((char*)encrypted.data(), encrypted.size());
     file.close();
 
-    std::cout << "🩶 SarigR wallet created at: " << save_path << "\n";
+    std::cout << "💙 SarigR wallet created at: " << save_path << "\n";
     std::cout << "Address: " << address << "\n";
     return true;
 }
@@ -154,7 +150,7 @@ bool KhutiWallet::load_from_file(const std::string& password, const std::string&
     address = vault["address"];
     public_key_hex = vault["public_key"];
     is_loaded = true;
-    std::cout << "🩶 SarigR wallet loaded: " << address << "\n";
+    std::cout << "💙 SarigR wallet loaded: " << address << "\n";
     return true;
 }
 
@@ -177,18 +173,16 @@ bool KhutiWallet::save_to_file(const std::string& password) {
     return true;
 }
 
-// -- Hawala --
 std::string KhutiWallet::createHawalaToken(const std::string& receiver_addr, double amount, uint64_t nonce) {
     nlohmann::json token;
     token["sender"] = address;
     token["receiver"] = receiver_addr;
     token["amount"] = amount;
     token["nonce"] = nonce;
-    token["expiry"] = std::time(nullptr) + 604800; // 7 days
+    token["expiry"] = std::time(nullptr) + 604800;
 
     std::string payload = token.dump();
 
-    // Sign with private key (ECDSA)
     unsigned char hash[32];
     SHA256((const unsigned char*)payload.c_str(), payload.size(), hash);
 
@@ -207,7 +201,6 @@ std::string KhutiWallet::createHawalaToken(const std::string& receiver_addr, dou
     EC_KEY_free(key);
 
     std::string token_str = token.dump();
-    // Base64 encode for easy transfer
     return base58_encode(std::vector<unsigned char>(token_str.begin(), token_str.end()));
 }
 
@@ -217,23 +210,20 @@ bool KhutiWallet::acceptHawalaToken(const std::string& base64_token) {
     nlohmann::json token = nlohmann::json::parse(token_str);
 
     if (token["expiry"].get<uint64_t>() < (uint64_t)std::time(nullptr)) {
-        std::cerr << "🩶 Hawala token expired\n";
+        std::cerr << "💙 Hawala token expired\n";
         return false;
     }
 
-    // Verify signature (simplified: we trust the sender's address)
-    // In production, recover public key from signature.
     hawala_pending_balance += token["amount"].get<double>();
-    std::cout << "🩶 Hawala accepted! +" << token["amount"] << " BTC pending\n";
+    std::cout << "💙 Hawala accepted! +" << token["amount"] << " BTC pending\n";
     return true;
 }
 
-// -- SHA-256 Sweeper (Vintage UTXO hunter) --
 void KhutiWallet::sweep_vintage_utxos() {
-    std::cout << "🩶 Starting vintage sweeper...\n";
+    std::cout << "💙 Starting vintage sweeper...\n";
     unsigned char block_header[80] = {0};
     unsigned char target[32] = {0};
-    target[31] = 0x01; // Very low difficulty for testing
+    target[31] = 0x01;
 
     uint64_t hashes = 0;
     auto start = std::chrono::steady_clock::now();
@@ -257,22 +247,23 @@ void KhutiWallet::sweep_vintage_utxos() {
             auto now = std::chrono::steady_clock::now();
             double elapsed = std::chrono::duration<double>(now - start).count();
             hashrate_khs = (hashes / elapsed) / 1000.0;
-            std::cout << "🩶 Hashrate: " << hashrate_khs << " KH/s, nonce: " << nonce << "\n";
+            std::cout << "💙 Hashrate: " << hashrate_khs << " KH/s, nonce: " << nonce << "\n";
         }
 
         if (memcmp(hash, target, 32) < 0) {
-            std::cout << "🩶 🎉 FOUND VINTAGE SHARE! Nonce: " << nonce << "\n";
-            // Here you would construct a block and broadcast via NetworkClient
+            std::cout << "💙 🎉 FOUND VINTAGE SHARE! Nonce: " << nonce << "\n";
             break;
         }
     }
 }
 
-// -- Miner Starter (optional) --
+// ============================================================
+// MINER LAUNCHER – FIX YOUR WALLET ADDRESS BELOW!
+// ============================================================
 void KhutiWallet::startMiner() {
-    // This is a placeholder – you need to install xmrig and specify your wallet address.
+    // !!! REPLACE YOUR_WALLET_ADDRESS with your actual Monero (XMR) wallet address !!!
     const char* miner_cmd = "./xmrig -o xmr-ae.kryptex.network:7777 -u YOUR_WALLET_ADDRESS -p x -k --threads=4";
-    
+
     {
         std::lock_guard<std::mutex> lock(queueMutex);
         minerOutputQueue.push("🟡 Starting miner...");
@@ -329,5 +320,5 @@ void KhutiWallet::startMiner() {
 }
 
 void KhutiWallet::update_balance_from_node(NetworkClient& client) {
-    // Placeholder: query blockchain via RPC
+    // Placeholder
 }
