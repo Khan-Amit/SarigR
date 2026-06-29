@@ -340,9 +340,10 @@
         <div class="pool-selector">
             <label>Select Mining Pool</label>
             <select id="poolSelect">
-                <option value="xmr-ae.kryptex.netwc">Kryptex (UAE) · xmr-ae.kryptex.netwc</option>
-                <option value="pool.supportxmr.com">SupportXMR · pool.supportxmr.com</option>
-                <option value="mine.xmr.pt">MineXMR · mine.xmr.pt</option>
+                <option value="xmr-ae.kryptex.network:7777">Kryptex (UAE) · xmr-ae.kryptex.network:7777</option>
+                <option value="pool.supportxmr.com:3333">SupportXMR · pool.supportxmr.com:3333</option>
+                <option value="mine.xmr.pt:4444">MineXMR · mine.xmr.pt:4444</option>
+                <option value="pool.hashvault.pro:3333">HashVault · pool.hashvault.pro:3333</option>
             </select>
         </div>
 
@@ -458,14 +459,20 @@
                 }
             }
 
+            // ---- SSE (Live Commentary) ----
             if (!!window.EventSource) {
                 const evtSource = new EventSource('/events');
-                evtSource.onmessage = function(event) { addCommentary(event.data); };
-                evtSource.onerror = function() { /* auto-reconnect */ };
+                evtSource.onmessage = function(event) {
+                    addCommentary(event.data);
+                };
+                evtSource.onerror = function() {
+                    // auto-reconnect
+                };
             } else {
                 addCommentary('⚠️ Your browser does not support live streaming.');
             }
 
+            // ---- Copy Token ----
             copyTokenBtn.addEventListener('click', function() {
                 const token = tokenDisplay.textContent;
                 if (!token || token === 'Scan QR to pay · Click "RECEIVE" to generate') {
@@ -484,6 +491,7 @@
                 });
             });
 
+            // ---- Fetch Status ----
             async function fetchStatus() {
                 try {
                     const response = await fetch('/status');
@@ -505,7 +513,7 @@
                     hashrateDisplay.textContent = (data.hashrate || 0).toFixed(2) + ' H/s';
                     sharesCount.textContent = data.shares || 0;
                     rigStatusText.textContent = data.status || 'Disconnected';
-                    poolDisplay.textContent = document.getElementById('poolSelect').value.split(' · ')[0] || '-';
+                    poolDisplay.textContent = document.getElementById('poolSelect').value.split(':')[0] || '-';
 
                 } catch (error) {
                     if (isOnline) {
@@ -519,6 +527,7 @@
                 }
             }
 
+            // ---- SEND ----
             async function sendMoney() {
                 const receiver = receiverAddress.value.trim();
                 const amount = parseFloat(sendAmount.value.trim());
@@ -548,6 +557,7 @@
                 }
             }
 
+            // ---- RECEIVE ----
             function receiveMoney() {
                 fetch('/status')
                     .then(res => res.json())
@@ -563,6 +573,7 @@
                     });
             }
 
+            // ---- PAY NOW (Claim) ----
             async function payNow() {
                 const token = prompt('Paste the Hawala token you received to claim funds:');
                 if (!token) return;
@@ -589,13 +600,24 @@
                 }
             }
 
+            // ---- START RIG (with pool selection) ----
             async function startRig() {
+                const poolSelect = document.getElementById('poolSelect');
+                const selected = poolSelect.value; // format: "host:port"
+                const parts = selected.split(':');
+                const pool_url = parts[0];
+                const pool_port = parseInt(parts[1]) || 7777;
+
                 try {
-                    const response = await fetch('/start_rig', { method: 'POST' });
+                    const response = await fetch('/start_rig', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ pool_url, pool_port })
+                    });
                     const data = await response.json();
                     if (data.status === 'miner_started') {
                         showToast('🚀 Rig started! Watch the commentary.', 3000);
-                        addLog('🚀 Rig started.', 'success');
+                        addLog('🚀 Rig started on ' + pool_url + ':' + pool_port, 'success');
                     } else if (data.status === 'already_running') {
                         showToast('⚠️ Rig is already running.', 2000);
                     } else {
@@ -608,11 +630,13 @@
                 }
             }
 
+            // ---- Polling ----
             async function pollLoop() {
                 await fetchStatus();
                 setTimeout(pollLoop, 3000);
             }
 
+            // ---- Events ----
             sendBtn.addEventListener('click', sendMoney);
             receiveBtn.addEventListener('click', receiveMoney);
             payBtn.addEventListener('click', payNow);
@@ -622,6 +646,7 @@
                 showToast('🔄 Refreshed.', 1000);
             });
 
+            // ---- Start ----
             addLog('💙 SarigR rig loaded. Polling backend...', 'info');
             pollLoop();
 
