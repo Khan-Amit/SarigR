@@ -1,0 +1,49 @@
+
+---
+
+### 4. `NetworkClient.h`
+
+```cpp
+/*
+ * ============================================================
+ * SARIGR™ – PROPRIETARY SOURCE CODE
+ * ============================================================
+ * Copyright (c) 2026 Seliim Ahmed. All rights reserved.
+ *
+ * This source code is the exclusive property of Seliim Ahmed.
+ * It is provided for viewing and reference purposes ONLY.
+ *
+ * ANY USE, REPRODUCTION, MODIFICATION, DISTRIBUTION, OR
+ * CREATION OF DERIVATIVE WORKS IS STRICTLY PROHIBITED
+ * WITHOUT THE PRIOR WRITTEN PERMISSION OF SELIIM AHMED.
+ *
+ * For licensing, permissions, or legal inquiries:
+ * Email: amit.khanna.1082@gmail.com
+ *
+ * UNAUTHORIZED USE WILL RESULT IN LEGAL PROCEEDINGS.
+ * ============================================================
+ */
+
+#ifndef NETWORKCLIENT_H
+#define NETWORKCLIENT_H
+
+#include <string>
+
+class NetworkClient {
+public:
+    NetworkClient();
+    ~NetworkClient();
+
+    bool connect(const std::string& host, int port);
+    void disconnect();
+    bool isConnected() const;
+
+    bool sendMessage(const std::string& message);
+    std::string receiveMessage();  // Reads until '\n'
+
+private:
+    int sockfd;
+    bool connected;
+};
+
+#endif
