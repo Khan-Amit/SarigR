@@ -314,7 +314,6 @@
     <div id="toast" class="toast">💙 Ready</div>
 
     <div class="khuti-card" id="khutiCard">
-        <!-- HEADER -->
         <div class="khuti-header">
             <div class="khuti-title">💙 SARIGR <span>Rig</span></div>
             <div class="khuti-status">
@@ -323,7 +322,6 @@
             </div>
         </div>
 
-        <!-- BALANCES -->
         <div class="balance-grid">
             <div class="balance-item">
                 <div class="coin">LITECOIN (LTC)</div>
@@ -339,7 +337,6 @@
             </div>
         </div>
 
-        <!-- POOL SELECTOR -->
         <div class="pool-selector">
             <label>Select Mining Pool</label>
             <select id="poolSelect">
@@ -349,7 +346,6 @@
             </select>
         </div>
 
-        <!-- SEND / RECEIVE / PAY -->
         <div class="srp-section">
             <div class="srp-title">
                 SEND / RECEIVE / PAY
@@ -379,13 +375,11 @@
             </div>
         </div>
 
-        <!-- RUNNING COMMENTARY -->
         <div class="commentary-section">
             <div class="commentary-title">📡 Running Commentary (Live)</div>
             <div id="commentaryBox" class="commentary-box"></div>
         </div>
 
-        <!-- RIG STATUS -->
         <div class="rig-status">
             <span class="stat-item"><span class="label">Status:</span> <span id="rigStatusText">Disconnected</span></span>
             <span class="stat-item"><span class="label">Shares:</span> <span id="sharesCount">0</span></span>
@@ -393,20 +387,16 @@
             <span class="stat-item"><span class="label">Pool:</span> <span id="poolDisplay">-</span></span>
         </div>
 
-        <!-- ACTION BUTTONS -->
         <div style="display:flex; gap:10px; margin-top:12px;">
             <button class="khuti-btn" id="startRigBtn" style="background:#0d47a1; color:white; border-color:#1565c0; flex:2; font-weight:700;">🚀 START RIG</button>
             <button class="khuti-btn" id="refreshBtn" style="border-color:var(--border-color); flex:1;">🔄 Refresh</button>
         </div>
 
-        <!-- LOG -->
         <div class="khuti-log" id="logContainer">
             <div class="log-entry"><span class="time">💙</span> SarigR rig ready.</div>
         </div>
     </div>
 
-    <!-- ============================================================ -->
-    <!-- ===== JAVASCRIPT ENGINE ===== -->
     <script>
         (function() {
             'use strict';
@@ -468,20 +458,14 @@
                 }
             }
 
-            // ---- SSE (Live Commentary) ----
             if (!!window.EventSource) {
                 const evtSource = new EventSource('/events');
-                evtSource.onmessage = function(event) {
-                    addCommentary(event.data);
-                };
-                evtSource.onerror = function() {
-                    // Auto-reconnect
-                };
+                evtSource.onmessage = function(event) { addCommentary(event.data); };
+                evtSource.onerror = function() { /* auto-reconnect */ };
             } else {
                 addCommentary('⚠️ Your browser does not support live streaming.');
             }
 
-            // ---- Copy Token ----
             copyTokenBtn.addEventListener('click', function() {
                 const token = tokenDisplay.textContent;
                 if (!token || token === 'Scan QR to pay · Click "RECEIVE" to generate') {
@@ -500,7 +484,6 @@
                 });
             });
 
-            // ---- Fetch Status ----
             async function fetchStatus() {
                 try {
                     const response = await fetch('/status');
@@ -536,7 +519,6 @@
                 }
             }
 
-            // ---- SEND ----
             async function sendMoney() {
                 const receiver = receiverAddress.value.trim();
                 const amount = parseFloat(sendAmount.value.trim());
@@ -566,7 +548,6 @@
                 }
             }
 
-            // ---- RECEIVE ----
             function receiveMoney() {
                 fetch('/status')
                     .then(res => res.json())
@@ -582,7 +563,6 @@
                     });
             }
 
-            // ---- PAY NOW (Claim) ----
             async function payNow() {
                 const token = prompt('Paste the Hawala token you received to claim funds:');
                 if (!token) return;
@@ -609,7 +589,6 @@
                 }
             }
 
-            // ---- START RIG ----
             async function startRig() {
                 try {
                     const response = await fetch('/start_rig', { method: 'POST' });
@@ -629,13 +608,11 @@
                 }
             }
 
-            // ---- Polling ----
             async function pollLoop() {
                 await fetchStatus();
                 setTimeout(pollLoop, 3000);
             }
 
-            // ---- Events ----
             sendBtn.addEventListener('click', sendMoney);
             receiveBtn.addEventListener('click', receiveMoney);
             payBtn.addEventListener('click', payNow);
@@ -645,7 +622,6 @@
                 showToast('🔄 Refreshed.', 1000);
             });
 
-            // ---- Start ----
             addLog('💙 SarigR rig loaded. Polling backend...', 'info');
             pollLoop();
 
