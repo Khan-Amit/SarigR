@@ -20,14 +20,12 @@ std::vector<unsigned char> KhutiEnigma::encrypt(const std::vector<unsigned char>
                                                 const std::string& password) {
     initRotors(password);
 
-    // Step 1: Enigma rotor permutation
     std::vector<unsigned char> transformed(plaintext.size());
     for (size_t i = 0; i < plaintext.size(); i++) {
         int p = i % 256;
         transformed[i] = plaintext[i] ^ rotor1[p] ^ rotor2[(p + i) % 256] ^ rotor3[(p + i * 2) % 256];
     }
 
-    // Step 2: AES-256-GCM (OpenSSL EVP)
     unsigned char key[32];
     SHA256((const unsigned char*)password.c_str(), password.size(), key);
 
@@ -49,7 +47,6 @@ std::vector<unsigned char> KhutiEnigma::encrypt(const std::vector<unsigned char>
     EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, tag);
     EVP_CIPHER_CTX_free(ctx);
 
-    // Build: nonce (12) + ciphertext (variable) + tag (16)
     std::vector<unsigned char> result;
     result.insert(result.end(), nonce, nonce + 12);
     result.insert(result.end(), ciphertext.begin(), ciphertext.begin() + ciphertext_len);
@@ -87,7 +84,6 @@ std::vector<unsigned char> KhutiEnigma::decrypt(const std::vector<unsigned char>
 
     if (ret <= 0) throw std::runtime_error("Decryption failed (wrong password)");
 
-    // Inverse Enigma rotor permutation
     std::vector<unsigned char> plaintext(decrypted.size());
     for (size_t i = 0; i < decrypted.size(); i++) {
         int p = i % 256;
