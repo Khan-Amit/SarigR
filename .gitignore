@@ -1,7 +1,5 @@
 # ========================================
 # SARIGR – GIT IGNORE
-# Protects compiled binaries, vault files,
-# IDE cruft, and system garbage.
 # ========================================
 
 # --- Compiled Binaries ---
@@ -23,7 +21,7 @@ lib/
 .deps/
 __pycache__/
 
-# --- Khuti Vault Files (CRITICAL) ---
+# --- Vault Files (CRITICAL) ---
 *.khuti
 *.khuti.bak
 *.wallet
@@ -41,7 +39,7 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# --- Temporary & System Files ---
+# --- Temporary Files ---
 *.tmp
 *.temp
 *.core
@@ -54,7 +52,7 @@ Thumbs.db
 *.old
 *.orig
 
-# --- Compiler Dependencies (if using CMake) ---
+# --- CMake ---
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
@@ -66,7 +64,7 @@ Makefile
 .github/
 .gitmodules
 
-# --- No accidental uploads of sensitive data ---
+# --- Sensitive ---
 *.pem
 *.key
 *.crt
