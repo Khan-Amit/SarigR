@@ -3,28 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>❤️ SarigR Rig</title>
+    <title>💙 SarigR Rig</title>
     <style>
         /* ============================================================
-           SARIGR™ – Proprietary Front-End Interface
+           SARIGR™ – Proprietary Front-End Interface (💙 BLUE THEME)
            Copyright (c) 2026 Seliim Ahmed. All rights reserved.
            ============================================================ */
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --bg-red: #cc0000;
-            --bg-card: rgba(255, 255, 255, 0.85);
-            --text-primary: #000000;
-            --text-secondary: #333333;
-            --border-color: #990000;
-            --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            --bg-blue: #0a1929;
+            --bg-card: rgba(20, 40, 70, 0.92);
+            --text-primary: #e8f0fe;
+            --text-secondary: #90caf9;
+            --text-accent: #64b5f6;
+            --border-color: #1e4976;
+            --shadow: 0 8px 32px rgba(0, 20, 50, 0.8);
             --radius: 12px;
             --font-mono: 'Courier New', 'Fira Code', monospace;
+            --blue-glow: #42a5f544;
         }
         body {
-            background: var(--bg-red);
-            background-image: radial-gradient(circle at 10% 20%, rgba(255,255,255,0.05) 0%, transparent 20%),
-                              radial-gradient(circle at 90% 80%, rgba(255,255,255,0.05) 0%, transparent 30%);
+            background: var(--bg-blue);
+            background-image: radial-gradient(circle at 20% 30%, rgba(66, 165, 245, 0.08) 0%, transparent 40%),
+                              radial-gradient(circle at 80% 70%, rgba(66, 165, 245, 0.05) 0%, transparent 40%);
             color: var(--text-primary);
             font-family: var(--font-mono);
             display: flex;
@@ -36,19 +38,19 @@
             position: relative;
         }
         body::before {
-            content: "❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️";
+            content: "💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙💙";
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             font-size: 80px;
             letter-spacing: 40px;
             line-height: 120px;
-            opacity: 0.10;
+            opacity: 0.04;
             pointer-events: none;
             z-index: 0;
             overflow: hidden;
             white-space: nowrap;
             text-align: center;
-            color: #ff4444;
+            color: #64b5f6;
             transform: rotate(-5deg) scale(1.2);
         }
 
@@ -62,14 +64,14 @@
             border: 1px solid var(--border-color);
             position: relative;
             z-index: 1;
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(6px);
         }
 
         .khuti-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid #990000;
+            border-bottom: 2px solid var(--border-color);
             padding-bottom: 10px;
             margin-bottom: 16px;
         }
@@ -78,14 +80,14 @@
         .khuti-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
         .status-dot {
             width: 10px; height: 10px; border-radius: 50%;
-            background: #00aa00;
-            box-shadow: 0 0 10px #00aa0088;
+            background: #4caf50;
+            box-shadow: 0 0 12px #4caf5088;
             transition: 0.3s;
         }
-        .status-dot.offline { background: #aa0000; box-shadow: 0 0 10px #aa000088; }
+        .status-dot.offline { background: #f44336; box-shadow: 0 0 12px #f4433688; }
         .status-dot.sweeping {
-            background: #ffaa00;
-            box-shadow: 0 0 20px #ffaa00bb;
+            background: #ffb300;
+            box-shadow: 0 0 20px #ffb300bb;
             animation: pulse 1s infinite;
         }
         @keyframes pulse {
@@ -101,31 +103,31 @@
             margin: 12px 0 16px 0;
         }
         .balance-item {
-            background: rgba(0,0,0,0.04);
+            background: rgba(255,255,255,0.05);
             border-radius: 8px;
             padding: 10px 8px;
             text-align: center;
-            border: 1px solid #ccc;
+            border: 1px solid rgba(255,255,255,0.08);
         }
-        .balance-item .coin { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+        .balance-item .coin { font-size: 14px; font-weight: 700; color: var(--text-secondary); }
         .balance-item .amount { font-size: 18px; font-weight: 600; color: var(--text-primary); }
-        .balance-item .fiat { font-size: 12px; color: var(--text-secondary); }
+        .balance-item .fiat { font-size: 12px; color: var(--text-accent); }
 
         .pool-selector {
             display: flex;
             gap: 10px;
             align-items: center;
             margin: 12px 0 16px 0;
-            background: rgba(0,0,0,0.03);
+            background: rgba(255,255,255,0.03);
             padding: 10px 12px;
             border-radius: 8px;
-            border: 1px solid #ddd;
+            border: 1px solid rgba(255,255,255,0.08);
         }
-        .pool-selector label { font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; }
+        .pool-selector label { font-size: 13px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
         .pool-selector select {
             flex: 1;
-            background: white;
-            border: 1px solid #ccc;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
             border-radius: 6px;
             padding: 6px 10px;
             font-family: var(--font-mono);
@@ -133,23 +135,23 @@
             color: var(--text-primary);
             outline: none;
         }
-        .pool-selector select:focus { border-color: var(--border-color); }
+        .pool-selector select:focus { border-color: var(--text-accent); box-shadow: 0 0 10px var(--blue-glow); }
 
         .srp-section {
-            background: rgba(255,255,255,0.6);
+            background: rgba(255,255,255,0.03);
             border-radius: 10px;
             padding: 16px;
-            border: 1px solid #ddd;
+            border: 1px solid rgba(255,255,255,0.08);
             margin: 12px 0 16px 0;
         }
         .srp-title { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
         .srp-title small { font-weight: 400; font-size: 12px; color: var(--text-secondary); }
         .srp-row { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
         .srp-row .field { display: flex; flex-direction: column; gap: 2px; }
-        .srp-row .field label { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
+        .srp-row .field label { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
         .srp-row .field input {
-            background: white;
-            border: 1px solid #ccc;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
             border-radius: 6px;
             padding: 10px 12px;
             font-family: var(--font-mono);
@@ -159,8 +161,8 @@
         }
         .srp-row .field input:focus {
             outline: none;
-            border-color: var(--border-color);
-            box-shadow: 0 0 8px rgba(204,0,0,0.3);
+            border-color: var(--text-accent);
+            box-shadow: 0 0 12px var(--blue-glow);
         }
         .srp-actions {
             display: flex;
@@ -179,26 +181,26 @@
             cursor: pointer;
             transition: 0.2s;
             font-family: var(--font-mono);
-            background: #eeeeee;
+            background: rgba(255,255,255,0.05);
             color: var(--text-primary);
-            border: 1px solid #bbb;
+            border: 1px solid rgba(255,255,255,0.1);
         }
-        .srp-actions .khuti-btn.send { background: #003366; color: white; border-color: #002244; }
-        .srp-actions .khuti-btn.send:hover { background: #004488; }
-        .srp-actions .khuti-btn.receive { background: #006633; color: white; border-color: #004422; }
-        .srp-actions .khuti-btn.receive:hover { background: #008844; }
-        .srp-actions .khuti-btn.pay { background: #993300; color: white; border-color: #772200; }
-        .srp-actions .khuti-btn.pay:hover { background: #bb4400; }
+        .srp-actions .khuti-btn.send { background: #0d47a1; color: white; border-color: #1565c0; }
+        .srp-actions .khuti-btn.send:hover { background: #1565c0; box-shadow: 0 0 20px var(--blue-glow); }
+        .srp-actions .khuti-btn.receive { background: #00695c; color: white; border-color: #00897b; }
+        .srp-actions .khuti-btn.receive:hover { background: #00897b; }
+        .srp-actions .khuti-btn.pay { background: #e65100; color: white; border-color: #f57c00; }
+        .srp-actions .khuti-btn.pay:hover { background: #f57c00; }
         .srp-actions .khuti-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .srp-token-area {
             margin-top: 10px;
-            background: rgba(255,255,255,0.7);
-            border: 1px dashed #aaa;
+            background: rgba(0,0,0,0.2);
+            border: 1px dashed var(--border-color);
             border-radius: 6px;
             padding: 8px 12px;
             font-size: 12px;
-            color: var(--text-primary);
+            color: var(--text-secondary);
             word-break: break-all;
             min-height: 36px;
             display: flex;
@@ -211,9 +213,9 @@
         .qr-placeholder {
             text-align: center;
             padding: 10px;
-            border: 1px dashed #ccc;
+            border: 1px dashed var(--border-color);
             border-radius: 8px;
-            background: rgba(255,255,255,0.4);
+            background: rgba(0,0,0,0.1);
             margin: 10px 0 12px 0;
             font-size: 14px;
             color: var(--text-secondary);
@@ -221,10 +223,10 @@
         .qr-placeholder strong { color: var(--text-primary); }
 
         .commentary-section { margin-top: 16px; }
-        .commentary-title { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+        .commentary-title { font-size: 14px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; }
         .commentary-box {
-            background: #111;
-            border: 1px solid #333;
+            background: #0a0f1a;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 10px 12px;
             height: 180px;
@@ -232,15 +234,15 @@
             font-family: var(--font-mono);
             font-size: 12px;
             line-height: 1.6;
-            color: #ccc;
+            color: #b0c4de;
         }
         .commentary-box::-webkit-scrollbar { width: 4px; }
-        .commentary-box::-webkit-scrollbar-track { background: #111; }
-        .commentary-box::-webkit-scrollbar-thumb { background: #cc0000; border-radius: 4px; }
-        .commentary-line { border-bottom: 1px dotted #222; padding: 2px 0; white-space: pre-wrap; }
+        .commentary-box::-webkit-scrollbar-track { background: #0a0f1a; }
+        .commentary-box::-webkit-scrollbar-thumb { background: var(--text-accent); border-radius: 4px; }
+        .commentary-line { border-bottom: 1px dotted #1a2a3a; padding: 2px 0; white-space: pre-wrap; }
 
         .rig-status {
-            background: rgba(0,0,0,0.05);
+            background: rgba(0,0,0,0.2);
             border-radius: 8px;
             padding: 10px 12px;
             margin-top: 12px;
@@ -249,7 +251,7 @@
             flex-wrap: wrap;
             font-size: 12px;
             color: var(--text-secondary);
-            border: 1px solid #ddd;
+            border: 1px solid rgba(255,255,255,0.05);
         }
         .rig-status .stat-item { display: flex; align-items: center; gap: 4px; }
         .rig-status .stat-item .label { font-weight: 600; color: var(--text-primary); }
@@ -257,25 +259,25 @@
         .khuti-log {
             margin-top: 12px;
             padding: 8px 10px;
-            background: rgba(0,0,0,0.04);
+            background: rgba(0,0,0,0.2);
             border-radius: 6px;
             max-height: 100px;
             overflow-y: auto;
             font-size: 11px;
             color: var(--text-secondary);
-            border: 1px solid #ddd;
+            border: 1px solid rgba(255,255,255,0.05);
             font-family: var(--font-mono);
             line-height: 1.5;
         }
         .khuti-log::-webkit-scrollbar { width: 4px; }
-        .khuti-log::-webkit-scrollbar-track { background: #eee; }
-        .khuti-log::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
-        .khuti-log .log-entry { border-bottom: 1px dotted #ddd; padding: 2px 0; }
+        .khuti-log::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        .khuti-log::-webkit-scrollbar-thumb { background: var(--text-accent); border-radius: 4px; }
+        .khuti-log .log-entry { border-bottom: 1px dotted #1a2a3a; padding: 2px 0; }
         .khuti-log .log-entry:last-child { border-bottom: none; }
-        .khuti-log .time { color: #666; margin-right: 6px; }
-        .khuti-log .success { color: #006633; }
-        .khuti-log .info { color: #003366; }
-        .khuti-log .error { color: #cc0000; }
+        .khuti-log .time { color: #4a6a8a; margin-right: 6px; }
+        .khuti-log .success { color: #66bb6a; }
+        .khuti-log .info { color: var(--text-accent); }
+        .khuti-log .error { color: #ef5350; }
 
         @media (max-width: 480px) {
             .khuti-card { padding: 16px; }
@@ -289,12 +291,12 @@
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
-            color: white;
+            background: rgba(0, 10, 25, 0.95);
+            color: var(--text-primary);
             padding: 10px 20px;
             border-radius: 30px;
             font-size: 14px;
-            border: 1px solid #ff8888;
+            border: 1px solid var(--text-accent);
             box-shadow: 0 8px 30px rgba(0,0,0,0.8);
             z-index: 999;
             opacity: 0;
@@ -309,12 +311,12 @@
 </head>
 <body>
 
-    <div id="toast" class="toast">❤️ Ready</div>
+    <div id="toast" class="toast">💙 Ready</div>
 
     <div class="khuti-card" id="khutiCard">
         <!-- HEADER -->
         <div class="khuti-header">
-            <div class="khuti-title">❤️ SARIGR <span>Rig</span></div>
+            <div class="khuti-title">💙 SARIGR <span>Rig</span></div>
             <div class="khuti-status">
                 <span id="statusLabel">Online</span>
                 <span class="status-dot" id="statusDot"></span>
@@ -373,7 +375,7 @@
                 <button class="copy-btn" id="copyTokenBtn" title="Copy Token">📋</button>
             </div>
             <div class="qr-placeholder" id="qrPlaceholder">
-                <strong>❤️</strong> Click <strong>RECEIVE</strong> to generate a payment token (Hawala)
+                <strong>💙</strong> Click <strong>RECEIVE</strong> to generate a payment token (Hawala)
             </div>
         </div>
 
@@ -393,13 +395,13 @@
 
         <!-- ACTION BUTTONS -->
         <div style="display:flex; gap:10px; margin-top:12px;">
-            <button class="khuti-btn" id="startRigBtn" style="background:#cc0000; color:white; border-color:#990000; flex:2;">🚀 START RIG</button>
-            <button class="khuti-btn" id="refreshBtn" style="flex:1;">🔄 Refresh</button>
+            <button class="khuti-btn" id="startRigBtn" style="background:#0d47a1; color:white; border-color:#1565c0; flex:2; font-weight:700;">🚀 START RIG</button>
+            <button class="khuti-btn" id="refreshBtn" style="border-color:var(--border-color); flex:1;">🔄 Refresh</button>
         </div>
 
         <!-- LOG -->
         <div class="khuti-log" id="logContainer">
-            <div class="log-entry"><span class="time">❤️</span> SarigR rig ready.</div>
+            <div class="log-entry"><span class="time">💙</span> SarigR rig ready.</div>
         </div>
     </div>
 
@@ -473,7 +475,7 @@
                     addCommentary(event.data);
                 };
                 evtSource.onerror = function() {
-                    // Will auto-reconnect
+                    // Auto-reconnect
                 };
             } else {
                 addCommentary('⚠️ Your browser does not support live streaming.');
@@ -509,7 +511,7 @@
                         isOnline = true;
                         statusLabel.textContent = 'Online';
                         statusDot.className = 'status-dot';
-                        addLog('❤️ Connected to SarigR backend.', 'success');
+                        addLog('💙 Connected to SarigR backend.', 'success');
                     }
 
                     const onchain = data.balance_onchain || 0;
@@ -551,7 +553,7 @@
                     const data = await response.json();
                     if (data.status === 'created' && data.token) {
                         tokenDisplay.textContent = data.token;
-                        qrPlaceholder.innerHTML = `<strong>❤️</strong> Token generated! Share this with the receiver.`;
+                        qrPlaceholder.innerHTML = `<strong>💙</strong> Token generated! Share this with the receiver.`;
                         addLog(`💸 Sent ${amount} XMR to ${receiver.substring(0,12)}... (token generated)`, 'success');
                         showToast(`✅ Token created! Copy it and send.`, 4000);
                     } else {
@@ -571,7 +573,7 @@
                     .then(data => {
                         const addr = data.address || '1SarigR...';
                         tokenDisplay.textContent = addr;
-                        qrPlaceholder.innerHTML = `<strong>❤️</strong> Your address: ${addr} (copy it)`;
+                        qrPlaceholder.innerHTML = `<strong>💙</strong> Your address: ${addr} (copy it)`;
                         addLog(`📥 Displayed my address: ${addr.substring(0,12)}...`, 'info');
                         showToast('📋 Address displayed. Click copy to copy.', 2000);
                     })
@@ -615,6 +617,8 @@
                     if (data.status === 'miner_started') {
                         showToast('🚀 Rig started! Watch the commentary.', 3000);
                         addLog('🚀 Rig started.', 'success');
+                    } else if (data.status === 'already_running') {
+                        showToast('⚠️ Rig is already running.', 2000);
                     } else {
                         showToast('⚠️ ' + data.status, 2000);
                         addLog('⚠️ ' + data.status, 'error');
@@ -642,7 +646,7 @@
             });
 
             // ---- Start ----
-            addLog('❤️ SarigR rig loaded. Polling backend...', 'info');
+            addLog('💙 SarigR rig loaded. Polling backend...', 'info');
             pollLoop();
 
         })();
