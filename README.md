@@ -7,6 +7,12 @@ Test software
 
 ---
 
+# 💙 SARIGR™ – Sovereign Hawala Wallet & Vintage Sweeper
+
+**Copyright © 2026 Seliim Ahmed. All rights reserved.**
+
+---
+
 ## 🛡️ LEGAL NOTICE
 
 This software is the **exclusive intellectual property** of **Seliim Ahmed**.
@@ -27,7 +33,8 @@ SarigR™ is a sovereign, offline-first cryptocurrency wallet and vintage UTXO s
 - **Enigma Vault** – AES-256-GCM + rotor-scrambled encryption.
 - **Hawala Settlement** – Offline, peer-to-peer value transfer via signed tokens.
 - **SHA-256 Sweeper** – Vintage block hunting for lost UTXOs (2009–2013 era).
-- **Web Dashboard** – ❤️ Red-themed real-time interface served locally.
+- **Live Mining** – Integrated with XMRig for Monero (XMR) mining.
+- **Web Dashboard** – 💙 Blue-themed real-time interface served locally.
 
 ---
 
@@ -37,8 +44,8 @@ SarigR™ is a sovereign, offline-first cryptocurrency wallet and vintage UTXO s
 | :--- | :--- | :--- |
 | `NetworkClient` | C++17 | TCP transport (raw socket) |
 | `KhutiEnigma` | C++17 | Encryption vault |
-| `KhutiWallet` | C++17 | Key management, Hawala, SHA-256 sweeper |
-| `KhutiWebServer` | C++17 | Embedded HTTP server |
+| `KhutiWallet` | C++17 | Key management, Hawala, SHA-256 sweeper, miner launcher |
+| `KhutiWebServer` | C++17 | Embedded HTTP server + SSE streaming |
 | `index.html` | HTML/CSS/JS | Front-end dashboard |
 
 ---
@@ -50,7 +57,19 @@ SarigR™ is a sovereign, offline-first cryptocurrency wallet and vintage UTXO s
 If you have received permission:
 
 ```bash
-# Dependencies: g++, libssl-dev, nlohmann/json (header-only)
-g++ -std=c++17 -O3 -pthread \
-    NetworkClient.cpp KhutiEnigma.cpp KhutiWallet.cpp KhutiWebServer.cpp main.cpp \
-    -lssl -lcrypto -o sarig
+# Install dependencies (Ubuntu/Debian)
+sudo apt install g++ libssl-dev nlohmann-json3-dev
+
+# Download XMRig (static build)
+wget https://github.com/xmrig/xmrig/releases/download/v6.21.3/xmrig-6.21.3-linux-static-x64.tar.gz
+tar -xzf xmrig-6.21.3-linux-static-x64.tar.gz
+mv xmrig-6.21.3/xmrig ./xmrig
+chmod +x xmrig
+
+# Edit KhutiWallet.cpp – replace YOUR_WALLET_ADDRESS with your XMR address.
+
+# Compile
+g++ -std=c++17 -O3 -pthread *.cpp -lssl -lcrypto -o sarig
+
+# Run
+./sarig /path/to/your/vault.khuti
