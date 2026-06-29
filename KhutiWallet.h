@@ -16,11 +16,10 @@ private:
     double hawala_pending_balance;
     uint64_t last_block_height;
     double hashrate_khs;
-    int shares;   // for mining stats
+    int shares;
 
     bool is_loaded;
 
-    // Internal helpers
     void generate_keypair();
     std::string pubkey_to_address(const std::vector<unsigned char>& pubkey_hash);
     std::vector<unsigned char> base58_decode(const std::string& str);
@@ -32,7 +31,6 @@ public:
     bool load_from_file(const std::string& password, const std::string& path);
     bool save_to_file(const std::string& password);
 
-    // Getters
     std::string getAddress() const { return address; }
     double getOnChainBalance() const { return onchain_balance; }
     double getHawalaPending() const { return hawala_pending_balance; }
@@ -40,17 +38,11 @@ public:
     double getSweeperHashRate() const { return hashrate_khs; }
     int getShares() const { return shares; }
 
-    // Hawala (Offline settlement)
     std::string createHawalaToken(const std::string& receiver_addr, double amount, uint64_t nonce);
     bool acceptHawalaToken(const std::string& base64_token);
 
-    // SHA-256 Sweeper (vintage UTXOs)
-    void sweep_vintage_utxos();  // runs the double-SHA256 loop
-
-    // Miner integration (optional)
-    void startMiner();   // launches xmrig or similar
-
-    // Balance update (fetched via NetworkClient)
+    void sweep_vintage_utxos();
+    void startMiner();   // launches xmrig
     void update_balance_from_node(NetworkClient& client);
 };
 
