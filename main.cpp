@@ -21,7 +21,7 @@ std::string getDirectory(const std::string& filepath) {
 }
 
 int main(int argc, char** argv) {
-    std::cout << "❤️ SarigR Hawala Rig v2.0\n";
+    std::cout << "💙 SarigR Hawala Rig v2.0\n";
     std::cout << "========================\n";
 
     std::string wallet_file;
@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
 
     if (argc > 1) {
         wallet_file = argv[1];
-        std::cout << "🩶 Vault path: " << wallet_file << "\n";
+        std::cout << "💙 Vault path: " << wallet_file << "\n";
     } else {
         std::cout << "\n📂 Enter the FULL path where you want to store your vault.\n";
         std::cout << "   (e.g., /sdcard/XXX/sarig_wallet.khuti)\n";
@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    std::cout << "🩶 Using vault: " << wallet_file << "\n";
+    std::cout << "💙 Using vault: " << wallet_file << "\n";
 
     KhutiWallet wallet;
 
@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
     KhutiWebServer web(wallet);
     std::thread web_thread([&]() { web.start(8080); });
 
-    std::cout << "\n🩶 Commands: sweep | hawala | balance | vault | path | start | quit\n";
+    std::cout << "\n💙 Commands: sweep | hawala | balance | vault | path | start | quit\n";
     std::cout << "   (Web: http://localhost:8080)\n\n";
 
     std::string cmd;
@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
             std::cout << "Amount: "; std::cin >> amt;
             uint64_t nonce = std::time(nullptr);
             std::string token = wallet.createHawalaToken(recv, amt, nonce);
-            std::cout << "🩶 Hawala Token:\n" << token << "\n";
+            std::cout << "💙 Hawala Token:\n" << token << "\n";
         }
         else if (cmd == "balance") {
             std::cout << "On-Chain: " << wallet.getOnChainBalance() << " BTC\n";
@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
 
             nlohmann::json vault = nlohmann::json::parse(plaintext);
             std::cout << "\n========================================\n";
-            std::cout << "🩶  SARIGR VAULT CONTENTS  🩶\n";
+            std::cout << "💙  SARIGR VAULT CONTENTS  💙\n";
             std::cout << "========================================\n";
             std::cout << "File Path:   " << wallet_file << "\n";
             std::cout << "Address:     " << vault["address"] << "\n";
