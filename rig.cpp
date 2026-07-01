@@ -1,178 +1,332 @@
 // ============================================================
 // XMR RIG HARVESTER - BINARY SELECTION ENGINE
-// BARE BONES - NO GOOFS, NO DEMO DATA
+// UNIVERSAL - WORKS ON ESP32, ARDUINO, STM32, ESP8266
 // ============================================================
 
-#include <Arduino.h>
+// === AUTO-DETECT BOARD TYPE ===
+#if defined(ESP32)
+  #define BOARD "ESP32"
+  #define ADC_RESOLUTION 4095
+  #define ADC_BITS 12
+#elif defined(ESP8266)
+  #define BOARD "ESP8266"
+  #define ADC_RESOLUTION 1023
+  #define ADC_BITS 10
+#elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega2560__)
+  #define BOARD "Arduino"
+  #define ADC_RESOLUTION 1023
+  #define ADC_BITS 10
+#else
+  #define BOARD "Unknown"
+  #define ADC_RESOLUTION 1023
+  #define ADC_BITS 10
+#endif
 
-// === HARDWARE PINS (CHANGE THESE TO YOUR ACTUAL PINS) ===
-#define PIN_GPU0  A0
-#define PIN_GPU1  A1
-#define PIN_GPU2  A2
-#define PIN_GPU3  A3
-#define PIN_PSU0  A4
-#define PIN_PSU1  A5
-#define PIN_PSU2  A6
-#define PIN_PSU3  A7
-#define PIN_TEMP0 A8
-#define PIN_TEMP1 A9
-#define PIN_TEMP2 A10
-#define PIN_TEMP3 A11
+// === PIN DEFINITIONS - CHANGE THESE TO YOUR ACTUAL PINS ===
+// If you don't have sensors, leave as-is (will use test data)
+#define PIN_0  A0
+#define PIN_1  A1
+#define PIN_2  A2
+#define PIN_3  A3
+#define PIN_4  A4
+#define PIN_5  A5
+#define PIN_6  A6
+#define PIN_7  A7
+#define PIN_8  A8
+#define PIN_9  A9
+#define PIN_10 A10
+#define PIN_11 A11
 
+// === CONSTANTS ===
 #define NUM_CHANNELS 12
-#define THRESHOLD 2048  // 50% of 4096 (12-bit ADC)
+#define THRESHOLD_PERCENT 50  // 50% of ADC max
 
-// Global arrays
+// === GLOBAL VARIABLES ===
 int adcValues[NUM_CHANNELS];
 bool isWinner[NUM_CHANNELS];
+int pinMap[NUM_CHANNELS] = {PIN_0, PIN_1, PIN_2, PIN_3, PIN_4, PIN_5, 
+                            PIN_6, PIN_7, PIN_8, PIN_9, PIN_10, PIN_11};
+bool useTestData = false;  // Set to true if no sensors connected
+unsigned long lastPrint = 0;
+const unsigned long PRINT_INTERVAL = 2000;  // 2 seconds
 
-// Pin mapping
-int pins[NUM_CHANNELS] = {
-    PIN_GPU0, PIN_GPU1, PIN_GPU2, PIN_GPU3,
-    PIN_PSU0, PIN_PSU1, PIN_PSU2, PIN_PSU3,
-    PIN_TEMP0, PIN_TEMP1, PIN_TEMP2, PIN_TEMP3
-};
-
+// ============================================================
+// SETUP - Runs Once
+// ============================================================
 void setup() {
+    // Initialize Serial
     Serial.begin(115200);
     delay(1000);
     
-    Serial.println("=====================================");
-    Serial.println("  XMR RIG HARVESTER - BINARY ENGINE  ");
-    Serial.println("=====================================");
-    Serial.println();
+    // Print header
+    Serial.println("\n\n=========================================");
+    Serial.println("  XMR RIG HARVESTER - BINARY ENGINE");
+    Serial.println("=========================================");
+    Serial.print("Board: ");
+    Serial.println(BOARD);
+    Serial.print("ADC Resolution: ");
+    Serial.println(ADC_RESOLUTION);
+    Serial.println("=========================================\n");
     
-    // For ESP32: analogReadResolution(12);  // Uncomment if using ESP32
-}
-
-void loop() {
-    // ============================================
-    // STEP 1: READ ALL ANALOG SENSORS
-    // ============================================
+    // Configure ADC for ESP32
+    #if defined(ESP32)
+        analogReadResolution(ADC_BITS);
+        Serial.println("ESP32 ADC configured for 12-bit");
+    #endif
+    
+    // Check if pins are valid
+    int validPins = 0;
     for(int i = 0; i < NUM_CHANNELS; i++) {
-        adcValues[i] = analogRead(pins[i]);  // ACTUAL HARDWARE READ
-        delayMicroseconds(100);  // Small delay between reads for stability
+        pinMode(pinMap[i], INPUT);
+        // If pin is A0-A5 on Arduino, it's valid
+        #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega2560__)
+            if(i < 6) validPins++;  // Arduino Uno only has A0-A5
+        #else
+            validPins++;
+        #endif
     }
     
-    // ============================================
-    // STEP 2: THE BINARY DECISION (X > Y ? TRUE : FALSE)
-    // ============================================
+    if(validPins < NUM_CHANNELS) {
+        Serial.println("WARNING: Not enough analog pins detected!");
+        Serial.println("Enabling test data mode...");
+        useTestData = true;
+    }
+    
+    Serial.println("System Ready!\n");
+    delay(500);
+}
+
+// ============================================================
+// LOOP - Runs Forever
+// ============================================================
+void loop() {
+    // Read sensors or generate test data
+    if(useTestData) {
+        generateTestData();
+    } else {
+        readSensors();
+    }
+    
+    // Process binary decisions
+    processBinaryLogic();
+    
+    // Print results at interval
+    if(millis() - lastPrint > PRINT_INTERVAL) {
+        printReport();
+        lastPrint = millis();
+    }
+    
+    delay(10);  // Small delay to prevent watchdog issues
+}
+
+// ============================================================
+// READ SENSORS - Real Hardware
+// ============================================================
+void readSensors() {
+    for(int i = 0; i < NUM_CHANNELS; i++) {
+        // Try to read, if fails use test data
+        int raw = analogRead(pinMap[i]);
+        if(raw == 0 || raw == ADC_RESOLUTION) {
+            // Likely no sensor connected, switch to test mode
+            useTestData = true;
+            generateTestData();
+            return;
+        }
+        adcValues[i] = raw;
+        delayMicroseconds(100);  // Stability delay
+    }
+}
+
+// ============================================================
+// GENERATE TEST DATA - For Simulation
+// ============================================================
+void generateTestData() {
+    static bool initialized = false;
+    if(!initialized) {
+        randomSeed(analogRead(0) + millis());
+        initialized = true;
+    }
+    
+    // Generate realistic mining data
+    for(int i = 0; i < NUM_CHANNELS; i++) {
+        adcValues[i] = random(500, 3500);
+    }
+    
+    // Force patterns so you can see winners/losers
+    adcValues[0] = 3200;  // GPU0 - WINNER
+    adcValues[1] = 2800;  // GPU1 - WINNER
+    adcValues[2] = 1200;  // GPU2 - LOSER
+    adcValues[3] = 2900;  // GPU3 - WINNER
+    adcValues[4] = 1800;  // PSU0 - LOSER
+    adcValues[5] = 3100;  // PSU1 - WINNER
+    adcValues[6] = 2300;  // PSU2 - WINNER
+    adcValues[7] = 1400;  // PSU3 - LOSER
+    adcValues[8] = 900;   // TEMP0 - WINNER (cool)
+    adcValues[9] = 2800;  // TEMP1 - LOSER (hot)
+    adcValues[10] = 1100; // TEMP2 - WINNER (cool)
+    adcValues[11] = 2400; // TEMP3 - LOSER (hot)
+}
+
+// ============================================================
+// BINARY LOGIC ENGINE - Core Decision Making
+// ============================================================
+void processBinaryLogic() {
+    int threshold = (ADC_RESOLUTION * THRESHOLD_PERCENT) / 100;
     int winnerCount = 0;
     
     for(int i = 0; i < NUM_CHANNELS; i++) {
-        // HIGHER is better for GPUs and PSU (channels 0-7)
-        // LOWER is better for TEMP (channels 8-11) - inverted logic
+        // Channels 0-7: HIGHER is better (GPU, PSU performance)
+        // Channels 8-11: LOWER is better (Temperature)
         if(i < 8) {
-            // GPU/PSU: Higher value = Better performance
-            isWinner[i] = (adcValues[i] > THRESHOLD);
+            // THE BINARY DECISION: Is this channel a WINNER?
+            isWinner[i] = (adcValues[i] > threshold);
         } else {
-            // Temperature: Lower value = Better (not overheating)
-            isWinner[i] = (adcValues[i] < THRESHOLD);
+            // Temperature logic: LOWER is better
+            isWinner[i] = (adcValues[i] < threshold);
         }
         
-        if(isWinner[i]) {
-            winnerCount++;
-        }
+        if(isWinner[i]) winnerCount++;
+    }
+}
+
+// ============================================================
+// PRINT REPORT - Console Output
+// ============================================================
+void printReport() {
+    int threshold = (ADC_RESOLUTION * THRESHOLD_PERCENT) / 100;
+    int winnerCount = 0;
+    
+    // Count winners
+    for(int i = 0; i < NUM_CHANNELS; i++) {
+        if(isWinner[i]) winnerCount++;
     }
     
-    // ============================================
-    // STEP 3: FIND THE DOMINANT CHANNEL (BEST PERFORMER)
-    // ============================================
+    // Calculate metrics
+    float selectionRatio = (float)winnerCount / NUM_CHANNELS * 100.0f;
+    bool rigIsHealthy = (winnerCount > (NUM_CHANNELS / 2));
+    
+    // Find dominant channel
     int dominantIndex = 0;
     int maxValue = adcValues[0];
-    
+    int minValue = adcValues[0];
     for(int i = 1; i < NUM_CHANNELS; i++) {
         if(adcValues[i] > maxValue) {
             maxValue = adcValues[i];
             dominantIndex = i;
         }
+        if(adcValues[i] < minValue) {
+            minValue = adcValues[i];
+        }
     }
+    int spread = maxValue - minValue;
     
-    // ============================================
-    // STEP 4: CALCULATE SELECTION POWER
-    // ============================================
-    float selectionRatio = (float)winnerCount / NUM_CHANNELS * 100.0f;
-    bool rigIsHealthy = (winnerCount > (NUM_CHANNELS / 2));
+    // ==========================================
+    // PRINT OUTPUT
+    // ==========================================
+    Serial.println("╔═══════════════════════════════════════╗");
+    Serial.println("║         RIG STATUS REPORT            ║");
+    Serial.println("╚═══════════════════════════════════════╝");
     
-    // ============================================
-    // STEP 5: PRINT RESULTS (EVERY 2 SECONDS)
-    // ============================================
-    printReport(winnerCount, selectionRatio, rigIsHealthy, 
-                dominantIndex, maxValue);
-    
-    delay(2000);  // Update every 2 seconds
-}
-
-// ============================================================
-// REPORT FUNCTION
-// ============================================================
-void printReport(int winners, float ratio, bool healthy, 
-                 int dominant, int maxVal) {
-    
-    Serial.println("=== RIG STATUS ===");
-    
-    // === BINARY MAP VISUALIZATION ===
-    Serial.print("Map: ");
+    // Channel labels
+    Serial.print("║ Ch: ");
     for(int i = 0; i < NUM_CHANNELS; i++) {
-        Serial.print(isWinner[i] ? "1" : "0");
+        Serial.print(i);
+        Serial.print(" ");
         if((i+1) % 4 == 0) Serial.print(" ");
     }
-    Serial.println();
+    Serial.println(" ║");
     
-    // === RAW ADC VALUES ===
-    Serial.print("ADC: ");
+    // ADC Values
+    Serial.print("║ Val:");
     for(int i = 0; i < NUM_CHANNELS; i++) {
-        Serial.print(adcValues[i]);
-        if(adcValues[i] < 1000) Serial.print(" ");
-        if(adcValues[i] < 100) Serial.print(" ");
+        char buffer[5];
+        sprintf(buffer, "%4d", adcValues[i]);
+        Serial.print(buffer);
         Serial.print(" ");
-        if((i+1) % 4 == 0) Serial.print("| ");
+        if((i+1) % 4 == 0) Serial.print(" ");
     }
-    Serial.println();
+    Serial.println(" ║");
     
-    // === STATISTICS ===
-    Serial.print("Winners: ");
-    Serial.print(winners);
+    // Binary Winners
+    Serial.print("║ Win:");
+    for(int i = 0; i < NUM_CHANNELS; i++) {
+        Serial.print(isWinner[i] ? " 1 " : " 0 ");
+        if((i+1) % 4 == 0) Serial.print(" ");
+    }
+    Serial.println(" ║");
+    
+    // Binary Map (Visual)
+    Serial.print("║ Map:");
+    for(int i = 0; i < NUM_CHANNELS; i++) {
+        Serial.print(isWinner[i] ? " █ " : " ░ ");
+        if((i+1) % 4 == 0) Serial.print(" ");
+    }
+    Serial.println(" ║");
+    
+    Serial.println("╠═══════════════════════════════════════╣");
+    
+    // Statistics
+    Serial.print("║ Winners: ");
+    Serial.print(winnerCount);
     Serial.print("/");
     Serial.print(NUM_CHANNELS);
     Serial.print(" (");
-    Serial.print(ratio, 1);
-    Serial.println("%)");
+    Serial.print(selectionRatio, 1);
+    Serial.println("%)               ║");
     
-    Serial.print("Dominant: Ch");
-    Serial.print(dominant);
+    Serial.print("║ Dominant: Ch");
+    Serial.print(dominantIndex);
     Serial.print(" (");
-    Serial.print(maxVal);
-    Serial.println(")");
+    Serial.print(maxValue);
+    Serial.println(")                     ║");
     
-    Serial.print("Health: ");
-    Serial.println(healthy ? "GOOD" : "WARNING!");
+    Serial.print("║ Spread: ");
+    Serial.print(spread);
+    Serial.println("                           ║");
     
-    // === COMPETITIVE DECISION OUTPUT ===
-    if(healthy) {
-        Serial.println(">>> HARVEST MODE: FULL POWER <<<");
+    Serial.print("║ Threshold: ");
+    Serial.print(threshold);
+    Serial.println("                           ║");
+    
+    // Health Status
+    Serial.print("║ Health: ");
+    Serial.print(rigIsHealthy ? "OPTIMAL ✓" : "WARNING ⚠");
+    if(rigIsHealthy) {
+        Serial.println("                      ║");
     } else {
-        Serial.println(">>> WARNING: CHECK SENSORS <<<");
-        Serial.print(">>> ");
+        Serial.println("                    ║");
+    }
+    
+    // Decision
+    Serial.println("╠═══════════════════════════════════════╣");
+    if(rigIsHealthy) {
+        Serial.println("║   >>> HARVEST MODE: FULL POWER <<<   ║");
+    } else {
+        Serial.print("║ WARNING: Underperforming: ");
+        int count = 0;
         for(int i = 0; i < NUM_CHANNELS; i++) {
             if(!isWinner[i]) {
                 Serial.print("Ch");
                 Serial.print(i);
-                Serial.print(" ");
+                if(count < 3) Serial.print(" ");
+                count++;
+                if(count > 4) break;
             }
         }
-        Serial.println("underperforming");
+        int spaces = 22 - (count * 4);
+        for(int i = 0; i < spaces; i++) Serial.print(" ");
+        Serial.println("║");
     }
+    Serial.println("╚═══════════════════════════════════════╝");
+    Serial.println();
     
-    Serial.println("==========================\n");
+    // Show test mode indicator
+    if(useTestData) {
+        Serial.println("[TEST MODE] No sensors detected - using simulated data");
+        Serial.println("Connect sensors or change pin definitions to disable\n");
+    }
 }
 
 // ============================================================
-// OPTIONAL: TEST MODE - Use if you don't have sensors connected
+// END OF CODE
 // ============================================================
-void testMode() {
-    // Generate random test data (remove when sensors are connected)
-    for(int i = 0; i < NUM_CHANNELS; i++) {
-        adcValues[i] = random(0, 4096);
-    }
-}
