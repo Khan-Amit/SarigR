@@ -1,135 +1,365 @@
-/*
- * SARIGR – Minimal Working Rig
- * Copyright (c) 2026 Seliim Ahmed
- *
- * Compile: g++ -std=c++17 -O3 -pthread rig.cpp -lssl -lcrypto -o rig
- * Run:     ./rig
- */
+// ============================================================
+// XMR RIG HARVESTER - Binary Logic Selection Engine
+// ============================================================
 
-#include <openssl/sha.h>
-#include <iostream>
-#include <string>
-#include <vector>
-#include <cstring>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <nlohmann/json.hpp>
+#include <Arduino.h>
 
-using json = nlohmann::json;
+// === CONFIGURATION ===
+#define NUM_CHANNELS 12
+#define ADC_MAX 4095.0f
+#define V_REF 3.3f
 
-// ---------- Simple TCP client ----------
-class NetClient {
-    int sock;
-public:
-    NetClient() : sock(-1) {}
-    bool connect(const std::string& host, int port) {
-        sock = socket(AF_INET, SOCK_STREAM, 0);
-        if (sock < 0) return false;
-        struct sockaddr_in addr;
-        addr.sin_family = AF_INET;
-        addr.sin_port = htons(port);
-        inet_pton(AF_INET, host.c_str(), &addr.sin_addr);
-        return ::connect(sock, (struct sockaddr*)&addr, sizeof(addr)) == 0;
+// Your 12 ADC channels (GPUs, PSU rails, temp sensors)
+int adcValues[NUM_CHANNELS] = {0};
+uint8_t binaryThresholds[NUM_CHANNELS] = {0};
+
+// Competition threshold - What's considered "winning"
+int globalThreshold = 2048; // 50% of 4096 ADC range
+
+// Performance tracking
+float selectionHistory[100] = {0};
+int historyIndex = 0;
+
+void setup() {
+    Serial.begin(115200);
+    Serial.println("=== XMR RIG HARVESTER INITIALIZED ===");
+    Serial.println("Binary Selection Engine ACTIVE");
+    Serial.println("=====================================\n");
+    
+    // Optional: Set ADC resolution for better precision
+    analogReadResolution(12); // 0-4095 (if using ESP32)
+}
+
+void loop() {
+    // === STEP 1: READ ALL SENSORS ===
+    readAllSensors();
+    
+    // === STEP 2: BINARY SELECTION ANALYSIS ===
+    SelectionResult result = analyzeSelection();
+    
+    // === STEP 3: COMPETITIVE SORTING ===
+    sortByPerformance();
+    
+    // === STEP 4: EXECUTE DECISIONS ===
+    executeMiningStrategy(result);
+    
+    // === STEP 5: LOG AND REPORT ===
+    printReport(result);
+    
+    delay(1000); // 1Hz update rate
+}
+
+// ============================================================
+// CORE FUNCTIONS
+// ============================================================
+
+void readAllSensors() {
+    for(int i = 0; i < NUM_CHANNELS; i++) {
+        // Simulated ADC reads - replace with actual analogRead()
+        // For ESP32: adcValues[i] = analogRead(i);
+        
+        // DEMO: Generate realistic mining rig data (hash rates, temps, voltages)
+        adcValues[i] = generateSimulatedData(i);
     }
-    void send(const std::string& msg) {
-        ::send(sock, msg.c_str(), msg.size(), 0);
+}
+
+int generateSimulatedData(int channel) {
+    // Simulates real rig telemetry:
+    // Channels 0-3: GPU Hash rates (higher = better)
+    // Channels 4-7: PSU Voltage rails (should be stable)
+    // Channels 8-11: Temperature sensors (lower = better, invert logic)
+    
+    int baseValue = 2000; // Center point
+    
+    if(channel < 4) {
+        // Hash rates: 1500-3500 (higher is winning)
+        return baseValue + random(-500, 1500);
+    } else if(channel < 8) {
+        // Voltages: 1800-2200 (stable ~2000)
+        return baseValue + random(-200, 200);
+    } else {
+        // Temperatures: 500-3000 (LOWER is winning - inverted later)
+        return baseValue + random(-500, 1000);
     }
-    std::string recv() {
-        char buf[4096];
-        int n = ::recv(sock, buf, sizeof(buf)-1, 0);
-        if (n <= 0) return "";
-        buf[n] = '\0';
-        return std::string(buf);
-    }
-    void close() { if (sock >= 0) ::close(sock); sock = -1; }
+}
+
+// ============================================================
+// THE BINARY DECISION ENGINE
+// ============================================================
+
+struct SelectionResult {
+    int winners;
+    int losers;
+    int dominantIndex;
+    int dominantValue;
+    int minValue;
+    int spread;
+    float selectionRatio;
+    bool isRigHealthy;
 };
 
-// ---------- Hex to bytes ----------
-std::vector<unsigned char> hex2bytes(const std::string& hex) {
-    std::vector<unsigned char> bytes;
-    for (size_t i = 0; i + 1 < hex.length(); i += 2) {
-        std::string byteStr = hex.substr(i, 2);
-        bytes.push_back((unsigned char)strtol(byteStr.c_str(), nullptr, 16));
-    }
-    return bytes;
-}
-
-// ---------- MAIN ----------
-int main() {
-    NetClient pool;
-    if (!pool.connect("pool.supportxmr.com", 3333)) {
-        std::cerr << "Pool connection failed.\n";
-        return 1;
-    }
-
-    // Login – replace with your real wallet address
-    std::string wallet = "YOUR_WALLET_ADDRESS";
-    json login = {{"method", "login"}, {"params", {{"login", wallet}}}};
-    pool.send(login.dump() + "\n");
-
-    int shares = 0;
-    while (true) {
-        std::string line = pool.recv();
-        if (line.empty()) break;
-
-        // Parse JSON
-        json data;
-        try { data = json::parse(line); } catch (...) { continue; }
-
-        // Only care about mining.notify
-        if (!data.contains("method") || data["method"] != "mining.notify")
-            continue;
-
-        auto params = data["params"];
-        if (params.size() < 5) continue;
-
-        std::string blob_hex = params[0];
-        std::string target_hex = params[4];
-
-        // Convert to binary
-        auto header = hex2bytes(blob_hex);
-        if (header.size() < 80) continue;
-
-        // Target (simplified)
-        unsigned char target[32] = {0};
-        auto tbytes = hex2bytes(target_hex);
-        for (size_t i = 0; i < tbytes.size() && i < 32; i++)
-            target[i] = tbytes[i];
-
-        // Hunt for nonce
-        bool found = false;
-        uint32_t nonce = 0;
-        unsigned char hash[32];
-
-        while (!found && nonce < 0xFFFFFFFF) {
-            // Insert nonce into header (little endian)
-            header[76] = (nonce >> 0) & 0xFF;
-            header[77] = (nonce >> 8) & 0xFF;
-            header[78] = (nonce >> 16) & 0xFF;
-            header[79] = (nonce >> 24) & 0xFF;
-
-            // Double SHA-256
-            SHA256_CTX ctx;
-            SHA256_Init(&ctx);
-            SHA256_Update(&ctx, header.data(), header.size());
-            SHA256_Final(hash, &ctx);
-            SHA256_Init(&ctx);
-            SHA256_Update(&ctx, hash, 32);
-            SHA256_Final(hash, &ctx);
-
-            // Check against target (compare first 4 bytes)
-            if (memcmp(hash, target, 4) <= 0) {
-                found = true;
-                shares++;
-                json submit = {{"method", "submit"}, {"params", {{"nonce", nonce}}}};
-                pool.send(submit.dump() + "\n");
-                std::cout << "✅ Share found! Nonce: " << nonce << " | Shares: " << shares << "\n";
-            }
-            nonce++;
+SelectionResult analyzeSelection() {
+    SelectionResult result;
+    result.winners = 0;
+    result.losers = 0;
+    result.dominantIndex = -1;
+    result.dominantValue = 0;
+    result.minValue = 4095;
+    result.spread = 0;
+    
+    // === THE BINARY LOGIC LOOP ===
+    for(int i = 0; i < NUM_CHANNELS; i++) {
+        // For temperature sensors (channels 8-11), invert logic
+        bool isWinner;
+        if(i >= 8) {
+            // Temperature: LOWER is better
+            isWinner = (adcValues[i] < globalThreshold);
+        } else {
+            // Performance: HIGHER is better
+            isWinner = (adcValues[i] > globalThreshold);
+        }
+        
+        // Binary assignment (THE DECISION)
+        if(isWinner) {
+            binaryThresholds[i] = 255;  // TRUE - WINNER
+            result.winners++;
+        } else {
+            binaryThresholds[i] = 0;    // FALSE - LOSER
+            result.losers++;
+        }
+        
+        // Track extremes for competitive analysis
+        if(adcValues[i] > result.dominantValue) {
+            result.dominantValue = adcValues[i];
+            result.dominantIndex = i;
+        }
+        if(adcValues[i] < result.minValue) {
+            result.minValue = adcValues[i];
         }
     }
-
-    pool.close();
-    return 0;
+    
+    // Calculate competitive metrics
+    result.selectionRatio = (float)result.winners / NUM_CHANNELS * 100.0f;
+    result.spread = result.dominantValue - result.minValue;
+    result.isRigHealthy = (result.winners > (NUM_CHANNELS / 2));
+    
+    return result;
 }
+
+// ============================================================
+// COMPETITIVE SORTING (Selection Sort using Binary Compare)
+// ============================================================
+
+void sortByPerformance() {
+    // Create a copy with indices for sorting
+    int sortedIndices[NUM_CHANNELS];
+    int sortedValues[NUM_CHANNELS];
+    
+    for(int i = 0; i < NUM_CHANNELS; i++) {
+        sortedIndices[i] = i;
+        sortedValues[i] = adcValues[i];
+    }
+    
+    // Selection sort - THE PERFECT COMPARATOR
+    for(int i = 0; i < NUM_CHANNELS - 1; i++) {
+        int maxIdx = i;
+        for(int j = i + 1; j < NUM_CHANNELS; j++) {
+            // BINARY COMPARISON: Is j BETTER than i?
+            if(sortedValues[j] > sortedValues[maxIdx]) {
+                maxIdx = j;
+            }
+        }
+        if(maxIdx != i) {
+            // Swap values
+            int tempVal = sortedValues[i];
+            sortedValues[i] = sortedValues[maxIdx];
+            sortedValues[maxIdx] = tempVal;
+            
+            // Swap indices
+            int tempIdx = sortedIndices[i];
+            sortedIndices[i] = sortedIndices[maxIdx];
+            sortedIndices[maxIdx] = tempIdx;
+        }
+    }
+    
+    // Store top performer for quick access
+    // (Already tracked in analyzeSelection)
+}
+
+// ============================================================
+// STRATEGY EXECUTION
+// ============================================================
+
+void executeMiningStrategy(SelectionResult result) {
+    if(result.isRigHealthy) {
+        // RIG IS OPTIMAL - Harvest at full power
+        setGlobalPower(100);
+        
+        // Boost the DOMINANT channel
+        if(result.dominantIndex >= 0 && result.dominantIndex < 4) {
+            // It's a GPU - give it more hashing priority
+            setGPUPriority(result.dominantIndex, 120); // Overclock
+        }
+        
+    } else {
+        // RIG IS UNDERPERFORMING - Diagnostic mode
+        setGlobalPower(80);
+        
+        // Find and fix bottlenecks
+        for(int i = 0; i < NUM_CHANNELS; i++) {
+            if(binaryThresholds[i] == 0) { // LOSER
+                if(i < 4) {
+                    // GPU underperforming - reduce load
+                    setGPUPriority(i, 60);
+                    Serial.print("WARNING: GPU ");
+                    Serial.print(i);
+                    Serial.println(" is underperforming");
+                } else if(i >= 8) {
+                    // Overheating sensor
+                    Serial.print("WARNING: Overheat detected on sensor ");
+                    Serial.println(i);
+                    activateCooling(i);
+                }
+            }
+        }
+    }
+}
+
+// ============================================================
+// HARDWARE CONTROL STUBS (Replace with actual hardware calls)
+// ============================================================
+
+void setGlobalPower(int percentage) {
+    // Send PWM signal to PSU controller
+    // Example: analogWrite(POWER_CONTROL_PIN, map(percentage, 0, 100, 0, 255));
+    // For demo, just print:
+    // Serial.print("Global Power: "); Serial.println(percentage);
+}
+
+void setGPUPriority(int gpuIndex, int priority) {
+    // Send I2C/SPI commands to GPU power stages
+    // Example: i2cWrite(gpuIndex, priority);
+    // For demo, just store:
+    // gpuPriority[gpuIndex] = priority;
+}
+
+void activateCooling(int sensorIndex) {
+    // Trigger fans or alerts
+    // digitalWrite(FAN_PIN[sensorIndex], HIGH);
+}
+
+// ============================================================
+// REPORTING & MONITORING
+// ============================================================
+
+void printReport(SelectionResult result) {
+    Serial.println("=== RIG STATUS REPORT ===");
+    
+    // Binary visualization
+    Serial.print("Binary Map: ");
+    for(int i = 0; i < NUM_CHANNELS; i++) {
+        Serial.print(binaryThresholds[i] == 255 ? "█" : "░");
+        if((i+1) % 4 == 0) Serial.print(" ");
+    }
+    Serial.println();
+    
+    // Raw values
+    Serial.print("Raw ADC: ");
+    for(int i = 0; i < NUM_CHANNELS; i++) {
+        Serial.print(adcValues[i]);
+        Serial.print(" ");
+        if((i+1) % 4 == 0) Serial.print("| ");
+    }
+    Serial.println();
+    
+    // Metrics
+    Serial.print("Winners: ");
+    Serial.print(result.winners);
+    Serial.print("/");
+    Serial.print(NUM_CHANNELS);
+    Serial.print(" (");
+    Serial.print(result.selectionRatio, 1);
+    Serial.println("%)");
+    
+    Serial.print("Dominant Channel: ");
+    Serial.print(result.dominantIndex);
+    Serial.print(" | Value: ");
+    Serial.print(result.dominantValue);
+    Serial.print(" | Spread: ");
+    Serial.println(result.spread);
+    
+    Serial.print("Rig Health: ");
+    Serial.println(result.isRigHealthy ? "OPTIMAL ✓" : "WARNING ⚠");
+    
+    // Competitive Advantage calculation
+    float competitiveEdge = (float)result.dominantValue / (result.minValue + 1);
+    Serial.print("Competitive Edge: ");
+    Serial.println(competitiveEdge, 2);
+    
+    Serial.println("============================\n");
+}
+
+// ============================================================
+// WORLD EYES EXTENSION - For Visual/Image Processing
+// ============================================================
+
+uint8_t* processWorldEyes(uint8_t image[][640], int rows, int cols, uint8_t threshold) {
+    static uint8_t output[480][640];
+    int brightPixels = 0;
+    int totalPixels = rows * cols;
+    
+    for(int y = 0; y < rows; y++) {
+        for(int x = 0; x < cols; x++) {
+            // THE BINARY DECISION
+            if(image[y][x] > threshold) {
+                output[y][x] = 255;   // TRUE - Target detected
+                brightPixels++;
+            } else {
+                output[y][x] = 0;     // FALSE - Background
+            }
+        }
+    }
+    
+    float selectionPower = (float)brightPixels / totalPixels * 100.0f;
+    Serial.print("World Eyes Selection Power: ");
+    Serial.print(selectionPower, 1);
+    Serial.println("%");
+    
+    return (uint8_t*)output;
+}
+
+// ============================================================
+// OPTIONAL: Moving Average Filter for Stable Readings
+// ============================================================
+
+class MovingAverage {
+private:
+    int window[10];
+    int index;
+    int count;
+    int sum;
+    
+public:
+    MovingAverage() : index(0), count(0), sum(0) {}
+    
+    int filter(int newValue) {
+        if(count < 10) {
+            window[count++] = newValue;
+            sum += newValue;
+            return sum / count;
+        } else {
+            sum -= window[index];
+            window[index] = newValue;
+            sum += newValue;
+            index = (index + 1) % 10;
+            return sum / 10;
+        }
+    }
+};
+
+// Instantiate filters for each channel
+MovingAverage filters[NUM_CHANNELS];
+
+// ============================================================
+// READY TO HARVEST!
+// ============================================================
